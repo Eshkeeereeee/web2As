@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Темный Калькулятор</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+        
+        .calculator-section {
+            background: #242424;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .display {
+            background: #121212;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid #333;
+        }
+        
+        .display-main {
+            font-size: 2.5em;
+            font-weight: 300;
+            color: #fff;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .display-history {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 5px;
+            min-height: 20px;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        
+        button {
+            background: #2a2a2a;
+            border: none;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 1.3em;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .operator {
+            background: #303030;
+            color: #4a9eff;
+        }
+        
+        .operator:hover {
+            background: #383838;
+        }
+        
+        .equals {
+            background: #4a9eff;
+            color: white;
+            grid-column: span 1;
+        }
+        
+        .equals:hover {
+            background: #3a8eef;
+        }
+        
+        .clear {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .clear:hover {
+            background: #ff3333;
+        }
+        
+        .zero {
+            grid-column: span 2;
+        }
+        
+        .charts-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .chart-container {
+            background: #242424;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .chart-title {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #aaa;
+            text-align: center;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+        }
+        
+        .history-list {
+            background: #242424;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            background: #2a2a2a;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item:hover {
+            background: #303030;
+        }
+        
+        .history-time {
+            font-size: 0.8em;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .display-main {
+                font-size: 2em;
+            }
+            
+            button {
+                padding: 15px;
+                font-size: 1.1em;
+            }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="calculator-section">
+            <div class="display">
+                <div class="display-history" id="history"></div>
+                <div class="display-main" id="display">0</div>
+            </div>
+            
+            <div class="buttons">
+                <button class="clear" onclick="clearAll()">C</button>
+                <button onclick="appendToDisplay('/')" class="operator">/</button>
+                <button onclick="appendToDisplay('*')" class="operator">×</button>
+                <button onclick="deleteLast()">←</button>
+                
+                <button onclick="appendToDisplay('7')">7</button>
+                <button onclick="appendToDisplay('8')">8</button>
+                <button onclick="appendToDisplay('9')">9</button>
+                <button onclick="appendToDisplay('-')" class="operator">-</button>
+                
+                <button onclick="appendToDisplay('4')">4</button>
+                <button onclick="appendToDisplay('5')">5</button>
+                <button onclick="appendToDisplay('6')">6</button>
+                <button onclick="appendToDisplay('+')" class="operator">+</button>
+                
+                <button onclick="appendToDisplay('1')">1</button>
+                <button onclick="appendToDisplay('2')">2</button>
+                <button onclick="appendToDisplay('3')">3</button>
+                <button onclick="percentage()" class="operator">%</button>
+                
+                <button onclick="appendToDisplay('0')" class="zero">0</button>
+                <button onclick="appendToDisplay('.')">.</button>
+                <button onclick="calculate()" class="equals">=</button>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-title">Распределение операций</div>
+                <div class="chart-wrapper">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="history-list">
+                <div class="chart-title">Последние операции</div>
+                <div id="historyList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let display = document.getElementById('display');
+        let historyDisplay = document.getElementById('history');
+        let currentInput = '0';
+        let previousInput = '';
+        let operation = null;
+        let shouldResetDisplay = false;
+        
+        let calculationHistory = [];
+        let pieChart = null;
+        
+        function updateDisplay() {
+            display.textContent = currentInput;
+            if (previousInput && operation) {
+                historyDisplay.textContent = `${previousInput} ${getOperatorSymbol(operation)}`;
+            } else {
+                historyDisplay.textContent = '';
+            }
+        }
+        
+        function getOperatorSymbol(op) {
+            const symbols = {
+                '/': '÷',
+                '*': '×',
+                '-': '-',
+                '+': '+'
+            };
+            return symbols[op] || op;
+        }
+        
+        function appendToDisplay(value) {
+            if (shouldResetDisplay) {
+                currentInput = '0';
+                shouldResetDisplay = false;
+            }
+            
+            if (value === '.' && currentInput.includes('.')) {
+                return;
+            }
+            
+            if (currentInput === '0' && value !== '.') {
+                currentInput = value;
+            } else {
+                currentInput += value;
+            }
+            
+            updateDisplay();
+        }
+        
+        function clearAll() {
+            currentInput = '0';
+            previousInput = '';
+            operation = null;
+            shouldResetDisplay = false;
+            updateDisplay();
+        }
+        
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+        
+        function percentage() {
+            try {
+                const value = parseFloat(currentInput);
+                currentInput = (value / 100).toString();
+                updateDisplay();
+            } catch (error) {
+                currentInput = 'Error';
+                updateDisplay();
+            }
+        }
+        
+        function calculate() {
+            if (!operation || !previousInput) return;
+            
+            try {
+                const prev = parseFloat(previousInput);
+                const current = parseFloat(currentInput);
+                let result;
+                
+                switch (operation) {
+                    case '+':
+                        result = prev + current;
+                        break;
+                    case '-':
+                        result = prev - current;
+                        break;
+                    case '*':
+                        result = prev * current;
+                        break;
+                    case '/':
+                        if (current === 0) {
+                            currentInput = 'Error';
+                            updateDisplay();
+                            return;
+                        }
+                        result = prev / current;
+                        break;
+                }
+                
+                const expression = `${previousInput} ${getOperatorSymbol(operation)} ${currentInput}`;
+                
+                if (Number.isInteger(result)) {
+                    currentInput = result.toString();
+                } else {
+                    currentInput = result.toFixed(8).replace(/\.?0+$/, '');
+                }
+                
+                addToHistory(expression, currentInput);
+                
+                previousInput = '';
+                operation = null;
+                shouldResetDisplay = true;
+                updateDisplay();
+                updateCharts();
+                
+            } catch (error) {
+                currentInput = 'Error';
+                updateDisplay();
+            }
+        }
+        
+        document.querySelectorAll('.operator').forEach(button => {
+            button.addEventListener('click', function() {
+                if (this.textContent === '%') return;
+                
+                if (operation && !shouldResetDisplay) {
+                    calculate();
+                }
+                
+                operation = this.textContent === '÷' ? '/' : 
+                           this.textContent === '×' ? '*' : 
+                           this.textContent;
+                previousInput = currentInput;
+                shouldResetDisplay = true;
+                updateDisplay();
+            });
+        });
+        
+        function addToHistory(expression, result) {
+            const timestamp = new Date().toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            calculationHistory.unshift({
+                expression,
+                result,
+                timestamp,
+                operation: operation
+            });
+            
+            if (calculationHistory.length > 50) {
+                calculationHistory.pop();
+            }
+            
+            updateHistoryList();
+        }
+        
+        function updateHistoryList() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            calculationHistory.slice(0, 10).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <span>${item.expression} = ${item.result}</span>
+                    <span class="history-time">${item.timestamp}</span>
+                `;
+                historyList.appendChild(div);
+            });
+        }
+        
+        function updateCharts() {
+            updatePieChart();
+        }
+        
+        function updatePieChart() {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            
+            const operationCount = {
+                '+': 0,
+                '-': 0,
+                '*': 0,
+                '/': 0
+            };
+            
+            calculationHistory.forEach(item => {
+                if (item.operation && operationCount.hasOwnProperty(item.operation)) {
+                    operationCount[item.operation]++;
+                }
+            });
+            
+            const labels = [];
+            const data = [];
+            const colors = ['#4a9eff', '#ff6b6b', '#51cf66', '#ffd93d'];
+            
+            Object.entries(operationCount).forEach(([op, count], index) => {
+                if (count > 0) {
+                    labels.push(getOperatorSymbol(op));
+                    data.push(count);
+                }
+            });
+            
+            if (pieChart) {
+                pieChart.destroy();
+            }
+            
+            pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, data.length),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e0e0e0',
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.key >= '0' && event.key <= '9') {
+                appendToDisplay(event.key);
+            } else if (event.key === '.') {
+                appendToDisplay('.');
+            } else if (event.key === '+' || event.key === '-' || event.key === '*' || event.key === '/') {
+                event.preventDefault();
+                if (operation && !shouldResetDisplay) {
+                    calculate();
+                }
+                operation = event.key;
+                previousInput = currentInput;
+                shouldResetDisplay = true;
+                updateDisplay();
+            } else if (event.key === 'Enter' || event.key === '=') {
+                event.preventDefault();
+                calculate();
+            } else if (event.key === 'Escape') {
+                clearAll();
+            } else if (event.key === 'Backspace') {
+                deleteLast();
+            }
+        });
+        
+        updateDisplay();
+    </script>
+</body>
+</html>
